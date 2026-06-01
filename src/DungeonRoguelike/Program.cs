@@ -4,10 +4,6 @@ using DungeonRoguelike.Rendering;
 
 namespace DungeonRoguelike;
 
-/// <summary>
-/// Ponto de entrada / composition root da aplicação.
-/// Etapa 1.3: monta loop + renderer com double buffer e roda a cena de demo.
-/// </summary>
 internal static class Program
 {
     private static void Main()
@@ -15,7 +11,7 @@ internal static class Program
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         if (!Console.IsOutputRedirected)
             Console.CursorVisible = false;
-        WindowsConsoleMode.Configure(); // evita pausa ao clicar (QuickEdit)
+        WindowsConsoleMode.Configure();
 
         (int width, int height) = ResolveViewportSize();
 
@@ -39,11 +35,8 @@ internal static class Program
         }
     }
 
-    /// <summary>
-    /// Tamanho da viewport. Reserva a última linha para evitar o scroll
-    /// automático ao escrever no canto inferior-direito. Usa um padrão seguro
-    /// quando não há console real (saída redirecionada/testes).
-    /// </summary>
+    // Reserva a última linha para evitar o scroll automático ao escrever no
+    // canto inferior-direito. Sem console real, usa um padrão fixo.
     private static (int Width, int Height) ResolveViewportSize()
     {
         if (Console.IsOutputRedirected)

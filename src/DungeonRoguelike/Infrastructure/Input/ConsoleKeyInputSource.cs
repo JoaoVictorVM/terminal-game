@@ -3,16 +3,11 @@ using DungeonRoguelike.Core;
 
 namespace DungeonRoguelike.Infrastructure.Input;
 
-/// <summary>
-/// Fonte de input portável baseada em <see cref="Console.ReadKey(bool)"/> não
-/// bloqueante. Como o console só entrega eventos (não o estado real), o estado
-/// "pressionada" é inferido: uma tecla conta como pressionada enquanto eventos
-/// dela continuarem chegando (auto-repetição do SO) dentro de uma janela de
-/// tempo. É um fallback — no Windows prefira <see cref="WindowsRawInputSource"/>.
-/// </summary>
+// Fallback portável: o console só entrega eventos, não o estado real, então a
+// tecla é considerada pressionada enquanto eventos de auto-repetição chegarem
+// dentro da janela de timeout. No Windows prefira WindowsRawInputSource.
 public sealed class ConsoleKeyInputSource : IInputSource
 {
-    /// <summary>Janela sem novos eventos após a qual a tecla é considerada solta.</summary>
     private static readonly long ReleaseTimeoutTicks = (long)(0.12 * Stopwatch.Frequency);
 
     private static readonly GameKey[] AllKeys = Enum.GetValues<GameKey>();
@@ -34,8 +29,8 @@ public sealed class ConsoleKeyInputSource : IInputSource
         }
 
         foreach (GameKey key in AllKeys)
-            _state[(int)key] = now - _lastSeenTicks[(int)key] <= ReleaseTimeoutTicks
-                               && _lastSeenTicks[(int)key] != 0;
+            _state[(int)key] = _lastSeenTicks[(int)key] != 0
+                               && now - _lastSeenTicks[(int)key] <= ReleaseTimeoutTicks;
     }
 
     public bool IsDown(GameKey key) => _state[(int)key];

@@ -3,13 +3,6 @@ using System.Runtime.Versioning;
 
 namespace DungeonRoguelike.Infrastructure.Input;
 
-/// <summary>
-/// Ajustes do modo do console no Windows para jogos em tempo real.
-///
-/// Desabilita o QuickEdit: por padrão, clicar na janela do console entra em
-/// modo de seleção e <b>pausa</b> a aplicação até o usuário pressionar Enter —
-/// inaceitável num loop de tempo real. Em outras plataformas é um no-op.
-/// </summary>
 public static class WindowsConsoleMode
 {
     private const int StdInputHandle = -10;
@@ -25,13 +18,15 @@ public static class WindowsConsoleMode
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
 
-    /// <summary>Aplica os ajustes; silenciosamente ignorado fora do Windows.</summary>
     public static void Configure()
     {
         if (OperatingSystem.IsWindows())
             DisableQuickEdit();
     }
 
+    // Com QuickEdit ligado, clicar na janela do console entra em modo de seleção
+    // e congela a aplicação até o usuário pressionar Enter — inaceitável num
+    // loop de tempo real.
     [SupportedOSPlatform("windows")]
     private static void DisableQuickEdit()
     {

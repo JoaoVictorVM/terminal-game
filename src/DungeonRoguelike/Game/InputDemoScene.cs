@@ -5,15 +5,10 @@ using DungeonRoguelike.Rendering;
 
 namespace DungeonRoguelike.Game;
 
-/// <summary>
-/// Cena temporária da Etapa 1.4: comprova o input não-bloqueante. Move um '@'
-/// com as setas (estado "segurando" → movimento contínuo), mostra a defesa
-/// enquanto X é segurado, pisca um indicador de ataque ao apertar Z (borda) e
-/// encerra com Esc/Q. Será substituída pelo jogador real na Fase 2.
-/// </summary>
+// Cena temporária da Etapa 1.4; será substituída pelo jogador real na Fase 2.
 public sealed class InputDemoScene : IGameScene
 {
-    private const double MoveSpeed = 16.0; // células/segundo
+    private const double MoveSpeed = 16.0;
     private const double AttackFlashSeconds = 0.15;
 
     private readonly Renderer _renderer;
@@ -38,15 +33,13 @@ public sealed class InputDemoScene : IGameScene
 
     public void Update(double deltaSeconds)
     {
-        _input.Update(); // fase Input do loop (PRD §16.3)
+        _input.Update();
 
         if (_input.WasPressed(GameKey.Cancel))
             _quit = true;
 
-        bool defending = _input.IsDown(GameKey.Defend);
-
-        // Defender impede movimento (PRD §7.1). Movimento contínuo enquanto segura.
-        if (!defending)
+        // Defender impede movimento (PRD §7.1).
+        if (!_input.IsDown(GameKey.Defend))
         {
             double dx = 0, dy = 0;
             if (_input.IsDown(GameKey.Left)) dx -= 1;
@@ -74,7 +67,6 @@ public sealed class InputDemoScene : IGameScene
         _renderer.Write(2, 0, $" FPS {_clock.MeasuredFps:0.0} / {_clock.TargetFps} ");
         _renderer.Write(2, _renderer.Height - 1, " setas: mover | Z: atacar | X: defender | Esc/Q: sair ");
 
-        // Estado das teclas (linha de status), provando leitura em tempo real.
         string keys = $"^{Mark(GameKey.Up)} v{Mark(GameKey.Down)} <{Mark(GameKey.Left)} >{Mark(GameKey.Right)}  " +
                       $"Z{Mark(GameKey.Attack)} X{Mark(GameKey.Defend)}";
         _renderer.Write(2, 1, keys);
