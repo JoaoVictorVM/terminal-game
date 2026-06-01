@@ -18,7 +18,7 @@ internal static class Program
         var loop = new GameLoop(targetFps: 60);
         var renderer = new Renderer(width, height);
         var input = InputSystem.Create();
-        var scene = new InputDemoScene(renderer, input, loop.Clock);
+        var scene = new EntityDemoScene(renderer, input);
 
         try
         {
