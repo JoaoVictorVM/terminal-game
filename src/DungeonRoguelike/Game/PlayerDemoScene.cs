@@ -1,25 +1,28 @@
 using DungeonRoguelike.Core;
 using DungeonRoguelike.Entities;
 using DungeonRoguelike.Entities.Components;
+using DungeonRoguelike.Entities.Systems;
 using DungeonRoguelike.Infrastructure.Input;
 using DungeonRoguelike.Rendering;
 
 namespace DungeonRoguelike.Game;
 
-// Cena temporária da Etapa 2.1: prova Position + Direction + sprite por direção.
-// As setas apenas viram o personagem; o movimento contínuo entra na Etapa 2.2.
-public sealed class EntityDemoScene : IGameScene
+// Cena temporária da Etapa 2.2: movimento contínuo + sprite direcional. O clamp
+// na viewport é provisório; a colisão real com paredes entra na Etapa 2.3.
+public sealed class PlayerDemoScene : IGameScene
 {
     private readonly Renderer _renderer;
     private readonly InputSystem _input;
+    private readonly PlayerController _controller;
     private readonly Entity _player;
 
     private bool _quit;
 
-    public EntityDemoScene(Renderer renderer, InputSystem input)
+    public PlayerDemoScene(Renderer renderer, InputSystem input)
     {
         _renderer = renderer;
         _input = input;
+        _controller = new PlayerController(input);
         _player = CreatePlayer(renderer.Width / 2, renderer.Height / 2);
     }
 
@@ -32,11 +35,8 @@ public sealed class EntityDemoScene : IGameScene
         if (_input.WasPressed(GameKey.Cancel))
             _quit = true;
 
-        DirectionComponent direction = _player.Require<DirectionComponent>();
-        if (_input.WasPressed(GameKey.Up)) direction.Facing = Direction.Up;
-        else if (_input.WasPressed(GameKey.Down)) direction.Facing = Direction.Down;
-        else if (_input.WasPressed(GameKey.Left)) direction.Facing = Direction.Left;
-        else if (_input.WasPressed(GameKey.Right)) direction.Facing = Direction.Right;
+        _controller.Update(_player, deltaSeconds);
+        ClampToViewport(_player.Require<PositionComponent>());
     }
 
     public void Render()
@@ -44,13 +44,22 @@ public sealed class EntityDemoScene : IGameScene
         _renderer.Clear();
         DrawBorder();
 
-        _renderer.Write(2, 0, " Etapa 2.1 - Entidade ");
-        _renderer.Write(2, 1, $" Direcao: {_player.Require<DirectionComponent>().Facing} ");
-        _renderer.Write(2, _renderer.Height - 1, " setas: virar | Esc/Q: sair ");
+        PositionComponent position = _player.Require<PositionComponent>();
+        Direction facing = _player.Require<DirectionComponent>().Facing;
+
+        _renderer.Write(2, 0, " Etapa 2.2 - Movimento ");
+        _renderer.Write(2, 1, $" Pos: {position.X,5:0.0},{position.Y,5:0.0}  Dir: {facing} ");
+        _renderer.Write(2, _renderer.Height - 1, " setas: mover | Esc/Q: sair ");
 
         DrawEntity(_player);
 
         _renderer.Present();
+    }
+
+    private void ClampToViewport(PositionComponent position)
+    {
+        position.X = Math.Clamp(position.X, 1f, _renderer.Width - 2f);
+        position.Y = Math.Clamp(position.Y, 1f, _renderer.Height - 2f);
     }
 
     private void DrawEntity(Entity entity)
