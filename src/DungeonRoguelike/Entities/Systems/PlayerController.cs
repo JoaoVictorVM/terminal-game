@@ -1,3 +1,4 @@
+using DungeonRoguelike.Collision;
 using DungeonRoguelike.Core;
 using DungeonRoguelike.Entities.Components;
 using DungeonRoguelike.Infrastructure.Input;
@@ -10,16 +11,18 @@ public sealed class PlayerController
     private const float DiagonalScale = 0.70710678f; // 1/raiz(2): diagonal não anda mais rápido
 
     private readonly InputSystem _input;
+    private readonly CollisionManager _collision;
 
-    public PlayerController(InputSystem input)
+    public PlayerController(InputSystem input, CollisionManager collision)
     {
         _input = input ?? throw new ArgumentNullException(nameof(input));
+        _collision = collision ?? throw new ArgumentNullException(nameof(collision));
     }
 
-    public void Update(Entity player, double deltaSeconds)
+    public void Update(Entity player, double deltaSeconds, ICollisionMap map)
     {
         UpdateFacing(player.Require<DirectionComponent>());
-        UpdatePosition(player.Require<PositionComponent>(), deltaSeconds);
+        UpdatePosition(player.Require<PositionComponent>(), deltaSeconds, map);
     }
 
     // A direção é a última seta pressionada (PRD §4.2): atualiza só na borda de
@@ -32,7 +35,7 @@ public sealed class PlayerController
         if (_input.WasPressed(GameKey.Right)) direction.Facing = Direction.Right;
     }
 
-    private void UpdatePosition(PositionComponent position, double deltaSeconds)
+    private void UpdatePosition(PositionComponent position, double deltaSeconds, ICollisionMap map)
     {
         float dx = 0f;
         float dy = 0f;
@@ -48,7 +51,6 @@ public sealed class PlayerController
         }
 
         float step = MoveSpeed * (float)deltaSeconds;
-        position.X += dx * step;
-        position.Y += dy * step;
+        (position.X, position.Y) = _collision.ResolveMove(map, position.X, position.Y, dx * step, dy * step);
     }
 }
