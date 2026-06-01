@@ -1,4 +1,5 @@
 using DungeonRoguelike.Game;
+using DungeonRoguelike.Infrastructure.Input;
 using DungeonRoguelike.Rendering;
 
 namespace DungeonRoguelike;
@@ -14,12 +15,14 @@ internal static class Program
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         if (!Console.IsOutputRedirected)
             Console.CursorVisible = false;
+        WindowsConsoleMode.Configure(); // evita pausa ao clicar (QuickEdit)
 
         (int width, int height) = ResolveViewportSize();
 
         var loop = new GameLoop(targetFps: 60);
         var renderer = new Renderer(width, height);
-        var scene = new RenderDemoScene(renderer, loop.Clock);
+        var input = InputSystem.Create();
+        var scene = new InputDemoScene(renderer, input, loop.Clock);
 
         try
         {
