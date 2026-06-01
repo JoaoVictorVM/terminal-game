@@ -18,7 +18,7 @@ internal static class Program
         var loop = new GameLoop(targetFps: 60);
         var renderer = new Renderer(width, height);
         var input = InputSystem.Create();
-        var scene = new CollisionDemoScene(renderer, input);
+        var scene = new HudDemoScene(renderer, input);
 
         try
         {

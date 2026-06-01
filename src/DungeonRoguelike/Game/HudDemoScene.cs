@@ -5,13 +5,16 @@ using DungeonRoguelike.Entities.Components;
 using DungeonRoguelike.Entities.Systems;
 using DungeonRoguelike.Infrastructure.Input;
 using DungeonRoguelike.Rendering;
+using DungeonRoguelike.UI;
 
 namespace DungeonRoguelike.Game;
 
-// Cena temporária da Etapa 2.3: prova colisão com paredes. O mapa fixo aqui é
-// um stand-in; salas reais (Room) chegam na Fase 3.
-public sealed class CollisionDemoScene : IGameScene
+// Cena temporária da Etapa 2.4: movimento/colisão das etapas anteriores + HUD
+// de vida. Z/Enter alteram a vida apenas para validar o HUD; o sistema de
+// saúde real chega na Etapa 4.1.
+public sealed class HudDemoScene : IGameScene
 {
+    private const int MaxHearts = 3;
     private const char WallSprite = '#';
 
     private readonly Renderer _renderer;
@@ -19,16 +22,18 @@ public sealed class CollisionDemoScene : IGameScene
     private readonly PlayerController _controller;
     private readonly TileMap _map;
     private readonly Entity _player;
+    private readonly Hud _hud = new();
 
+    private int _hearts = MaxHearts;
     private bool _quit;
 
-    public CollisionDemoScene(Renderer renderer, InputSystem input)
+    public HudDemoScene(Renderer renderer, InputSystem input)
     {
         _renderer = renderer;
         _input = input;
         _controller = new PlayerController(input, new CollisionManager());
         _map = BuildMap(renderer.Width, renderer.Height);
-        _player = CreatePlayer(renderer.Width / 2, renderer.Height / 4 + 1);
+        _player = CreatePlayer(renderer.Width / 2, renderer.Height / 2);
     }
 
     public bool IsRunning => !_quit;
@@ -40,6 +45,11 @@ public sealed class CollisionDemoScene : IGameScene
         if (_input.WasPressed(GameKey.Cancel))
             _quit = true;
 
+        if (_input.WasPressed(GameKey.Attack))
+            _hearts = Math.Max(0, _hearts - 1);
+        if (_input.WasPressed(GameKey.Confirm))
+            _hearts = MaxHearts;
+
         _controller.Update(_player, deltaSeconds, _map);
     }
 
@@ -48,12 +58,11 @@ public sealed class CollisionDemoScene : IGameScene
         _renderer.Clear();
         DrawMap();
 
-        PositionComponent position = _player.Require<PositionComponent>();
+        _hud.Draw(_renderer, _hearts, MaxHearts);
+        _renderer.Write(2, _renderer.Height - 1, " setas: mover | Z(debug): -1 vida | Enter: reset | Esc/Q: sair ");
+
         Direction facing = _player.Require<DirectionComponent>().Facing;
-
-        _renderer.Write(2, 0, " Etapa 2.3 - Colisao ");
-        _renderer.Write(2, 1, $" Pos: {position.X,5:0.0},{position.Y,5:0.0}  Dir: {facing} ");
-
+        PositionComponent position = _player.Require<PositionComponent>();
         _renderer.Set(position.TileX, position.TileY, _player.Require<RendererComponent>().SpriteFor(facing));
 
         _renderer.Present();
@@ -82,17 +91,6 @@ public sealed class CollisionDemoScene : IGameScene
             map.SetSolid(0, y, true);
             map.SetSolid(width - 1, y, true);
         }
-
-        // Parede horizontal com uma passagem, para testar deslizar e bloquear.
-        int wallY = height / 2;
-        int gap = width / 2;
-        for (int x = 3; x < width - 3; x++)
-            if (x != gap && x != gap + 1)
-                map.SetSolid(x, wallY, true);
-
-        // Alguns pilares isolados.
-        map.SetSolid(width / 4, height / 4, true);
-        map.SetSolid(3 * width / 4, 3 * height / 4, true);
 
         return map;
     }
